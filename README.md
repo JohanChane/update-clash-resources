@@ -22,7 +22,7 @@
 依赖: 
 
 ```sh
-pip install ruamel.yaml requires
+pip install ruamel.yaml requests
 ```
 
 ## 安装和使用
