@@ -30,7 +30,7 @@ pip install ruamel.yaml requests
 ```sh
 git clone https://github.com/JohanChane/update-clash-resources.git --depth 1
 cd update-clash-resources/update_clashcfg_res
-./update_clashcfg_res.py -h
+python ./update_clashcfg_res.py -h
 ```
 
 ### 常用用法
@@ -38,13 +38,13 @@ cd update-clash-resources/update_clashcfg_res
 ```sh
 ## In Windows
 # 更新当前使用的配置的资源
-./update_clashcfg_res.py -d 'C:/Users/<user>/.config/clash' -p 'https://127.0.0.1:7890'
+python ./update_clashcfg_res.py -d 'C:/Users/<user>/.config/clash' -p 'https://127.0.0.1:7890'
 # 更新名为 `config.yaml` 配置的资源
-./update_clashcfg_res.py -d 'C:/Users/<user>/.config/clash' -n 'config.yaml' -p 'https://127.0.0.1:7890'
+python ./update_clashcfg_res.py -d 'C:/Users/<user>/.config/clash' -n 'config.yaml' -p 'https://127.0.0.1:7890'
 
 ## In Linux
 # 更新 `<cfg_dir>/config.yaml` 配置的资源
-update_clashcfg_res.py -d '/home/<user>/.config/clash' -c 'config.yaml' -p 'https://127.0.0.1:7890'
+./update_clashcfg_res.py -d '/home/<user>/.config/clash' -c 'config.yaml' -p 'https://127.0.0.1:7890'
 ```
 
 ## `update_clashcfg_res` 的进阶用法
@@ -56,9 +56,9 @@ update_clashcfg_res.py -d '/home/<user>/.config/clash' -c 'config.yaml' -p 'http
 
 ```sh
 # Clash for Windows in Windows. cfg_dir 的参数是 `-d C:/Users/<user>/.config/clash`
-./up_clashcfg_res.py -n "config.yaml" -p "https://127.0.0.1:7890"
+python ./up_clashcfg_res.py -n "config.yaml" -p "https://127.0.0.1:7890"
 # Clash in Linux. cfg_dir 的参数是 `-d ~/.config/clash`
-./up_clashcfg_res.py -c "config.yaml" -p "https://127.0.0.1:7890"
+python ./up_clashcfg_res.py -c "config.yaml" -p "https://127.0.0.1:7890"
 ```
 
 如果想添加更多的默认值, 可以这样改:
@@ -77,7 +77,7 @@ cmd = f'python {script_path}/update_clashcfg_res/update_clashcfg_res.py -d "{cfg
 ./my_up_clashcfg_res.py -c config.yaml -r
 
 # In Windows
-./my_up_clashcfg_res.py -n config.yaml -r
+python ./my_up_clashcfg_res.py -n config.yaml -r
 ```
 
 ## IccRes
