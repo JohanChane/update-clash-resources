@@ -148,7 +148,7 @@ def update_net_res(session, net_res, section, cfg_dir):
                 try:
                     yaml_data['proxies']
                 except KeyError:
-                    print(f'Updated failed: "{i[0]}" is not yaml format')
+                    print(f'Updated failed: didn\'t write the content to "{i[1]}", for "{i[0]}" hasn\'t "proxies" key')
                     return updated_res
 
             with open(i[1], 'wb') as f:
