@@ -35,7 +35,7 @@ Examples:
 
 import sys, os, getopt, requests
 
-from ruamel.yaml import YAML
+import ruamel.yaml as rmyaml
 
 def update_res(sections, cfg_dir, *, cfg_rel_path=None, profile_path=None, cfg_name=None, proxy=None, timeout=None):
     cfg_path, cfg_url = get_cfg_path(cfg_dir, profile_path, cfg_rel_path, cfg_name)
@@ -54,17 +54,20 @@ def update_res(sections, cfg_dir, *, cfg_rel_path=None, profile_path=None, cfg_n
     if cfg_url:
         #response = session.get(cfg_url)
         with session.get(cfg_url) as response:
-            with open(cfg_path, "wb") as f:
+            with open(cfg_path, 'wb') as f:
                 f.write(response.content)
-        print(f'updated cfg "{cfg_path}"')
+        print(f'Updated cfg "{cfg_path}"')
         
-    net_res = get_net_res(cfg_path, sections)
-    update_net_res(session, net_res, cfg_dir)
-    print(f'updated resource(s) needed by "{cfg_path}"')
-    return net_res
+    updated_res = []
+    res = []
+    for s in sections:
+        res = get_net_res(cfg_path, [s])
+        updated_res += update_net_res(session, res, s, cfg_dir)
+    print(f'Updated resource(s) needed by "{cfg_path}"')
+    return updated_res
 
 def get_cfg_path(cfg_dir, profile_path=None, cfg_rel_path=None, cfg_name=None):
-    yaml = YAML(typ='safe')
+    yaml = rmyaml.YAML(typ='safe')
 
     cfg_path = ''
     cfg_url = ''
@@ -88,7 +91,7 @@ def get_cfg_path(cfg_dir, profile_path=None, cfg_rel_path=None, cfg_name=None):
             for x in list_data['files']:
                 if x['name'] == cfg_name:
                     cfg_path = os.path.join(cfg_dir, f'profiles/{x["time"]}')
-                    cfg_url = x["url"]
+                    cfg_url = x['url']
         # ### 如果没有指定 cfg_name 则当前选定的配置
         else:
             list_index = list_data['index']
@@ -102,14 +105,14 @@ def get_cfg_path(cfg_dir, profile_path=None, cfg_rel_path=None, cfg_name=None):
         cfg_path = os.path.join(cfg_dir, cfg_rel_path)
 
     if not os.path.exists(cfg_path):
-        sys.stderr.write(f"cfg_path: {cfg_path} isn't exists.")
+        sys.stderr.write(f'cfg_path: {cfg_path} isn\'t exists.')
         sys.exit(os.EX_USAGE)
 
     return cfg_path, cfg_url
 
 def get_net_res(cfg_path, sections):
     # ## 加载 cfg
-    yaml = YAML(typ='safe')
+    yaml = rmyaml.YAML(typ='safe')
     with open(cfg_path, 'r', encoding='utf-8') as f:
         cfg_data = yaml.load(f)
 
@@ -126,12 +129,13 @@ def get_net_res(cfg_path, sections):
 
     return net_res
 
-def update_net_res(session, net_res, cfg_dir):
+def update_net_res(session, net_res, section, cfg_dir):
     # ## 下载 net_res 里的资源
     # 保存环境
     oldcwd = os.getcwd()
     os.chdir(cfg_dir)
     
+    updated_res = []
     for i in net_res:
         dirpath = os.path.dirname(i[1])
         if not os.path.exists(dirpath):
@@ -139,13 +143,23 @@ def update_net_res(session, net_res, cfg_dir):
         
         #response = session.get(i[0])
         with session.get(i[0]) as response:
-            with open(i[1], "wb") as f:
-                f.write(response.content)
+            if section == 'proxy-providers':
+                yaml_data = rmyaml.safe_load(response.content.decode('utf-8'))
+                try:
+                    yaml_data['proxies']
+                except KeyError:
+                    print(f'Updated failed: "{i[0]}" is not yaml format')
+                    return updated_res
 
-        print(f'DONE: {i[1]}, {i[0]}')
+            with open(i[1], 'wb') as f:
+                f.write(response.content)
+            print(f'Updated successfully: {i[1]}, {i[0]}')
+            updated_res.append(i)
 
     # 恢复环境
     os.chdir(oldcwd)
+
+    return updated_res;
 
 # net_res_files 的路径 src_cfg_dir 是相对路径
 def install_proxy_providers(net_res_files, src_cfg_dir, dest_cfg_dir):
@@ -205,6 +219,8 @@ def main():
     if does_update_rules:
         sections.append('rule-providers')
     net_res = update_res(sections, cfg_dir, cfg_rel_path=cfg_rel_path, profile_path=profile_path, cfg_name=cfg_name, proxy=proxy, timeout=timeout)
+    if len(net_res) == 0:
+        return -1
 
     if tun_dir:
         # ## updated files
@@ -214,7 +230,7 @@ def main():
         src_cfg_dir = cfg_dir
         dest_cfg_dir = tun_dir
         install_proxy_providers(updated_files, src_cfg_dir, dest_cfg_dir)
-        print(f'installed updated files {updated_files} from "{src_cfg_dir}" to "{dest_cfg_dir}"')
+        print(f'Installed updated files {updated_files} from "{src_cfg_dir}" to "{dest_cfg_dir}"')
 
 if __name__ == '__main__':
     main()
