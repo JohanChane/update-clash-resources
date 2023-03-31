@@ -141,20 +141,23 @@ def update_net_res(session, net_res, section, cfg_dir):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
         
-        #response = session.get(i[0])
-        with session.get(i[0]) as response:
-            if section == 'proxy-providers':
-                yaml_data = rmyaml.safe_load(response.content.decode('utf-8'))
-                try:
+        try:
+            #response = session.get(i[0])
+            with session.get(i[0]) as response:
+                if section == 'proxy-providers':
+                    yaml_data = rmyaml.safe_load(response.content.decode('utf-8'))
                     yaml_data['proxies']
-                except KeyError:
-                    print(f'Updated failed: didn\'t write the content to "{i[1]}", for "{i[0]}" hasn\'t "proxies" key')
-                    return updated_res
 
-            with open(i[1], 'wb') as f:
-                f.write(response.content)
-            print(f'Updated successfully: {i[1]}, {i[0]}')
-            updated_res.append(i)
+                with open(i[1], 'wb') as f:
+                    f.write(response.content)
+                print(f'Updated successfully: {i[1]}, {i[0]}')
+                updated_res.append(i)
+        except requests.exceptions.RequestException as e:
+            print('requests exceptions：', e)
+            return updated_res
+        except KeyError:
+            print(f'Updated failed: didn\'t write the content to "{i[1]}", for "{i[0]}" hasn\'t "proxies" key')
+            return updated_res
 
     # 恢复环境
     os.chdir(oldcwd)
