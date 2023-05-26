@@ -24,6 +24,10 @@ Examples:
     update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -n 'myconfig' -p 'https://127.0.0.1:7890'
     # 更新 `config.yaml` 配置的资源
     update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -c 'config.yaml' -p 'https://127.0.0.1:7890'
+    # 更新配置且更新 `config.yaml` 配置的资源
+    update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -c 'config.yaml' -p 'https://127.0.0.1:7890' -u '<cfg_url>'
+    # linux only
+    update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -c 'config.yaml' -p 'https://127.0.0.1:7890' -u '$(cat ~/.config/clash_tun/config_url)'
     # 非默认的 profile 路径
     update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -f 'C:/Users/johan/Desktop/profiles' -n 'config_mobile.yaml'
     # 更新 rule-providers
@@ -33,12 +37,14 @@ Examples:
 
 """
 
-import sys, os, getopt, requests
+import sys, os, shutil, getopt, requests
 
 import ruamel.yaml as rmyaml
 
-def update_res(sections, cfg_dir, *, cfg_rel_path=None, profile_path=None, cfg_name=None, proxy=None, timeout=None):
-    cfg_path, cfg_url = get_cfg_path(cfg_dir, profile_path, cfg_rel_path, cfg_name)
+def update_res(sections, cfg_dir, *, cfg_rel_path=None, profile_path=None, cfg_name=None, cfg_url=None, proxy=None, timeout=None):
+    cfg_path, tmp_cfg_url = get_cfg_path(cfg_dir, profile_path, cfg_rel_path, cfg_name)
+    if tmp_cfg_url:
+        cfg_url = tmp_cfg_url
     
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'})
@@ -52,12 +58,21 @@ def update_res(sections, cfg_dir, *, cfg_rel_path=None, profile_path=None, cfg_n
     
     # 更新从 url 导入的配置
     if cfg_url:
+        cfg_path_bak = cfg_path + '~'
+        shutil.copy(cfg_path, cfg_path_bak)
         #response = session.get(cfg_url)
         with session.get(cfg_url) as response:
-            with open(cfg_path, 'wb') as f:
-                f.write(response.content)
-        print(f'Updated cfg "{cfg_path}"')
+            if does_have_section(response.content.decode('utf-8'), 'proxy-groups'):
+                with open(cfg_path, 'wb') as f:
+                    f.write(response.content)
+                print(f'Updated cfg successfully: "{cfg_path}", "{cfg_url}"')
+            else:
+                print(f'Updated cfg failed: "{cfg_path}", "{cfg_url}"')
         
+    if not os.path.exists(cfg_path):
+        sys.stderr.write(f'cfg_path: {cfg_path} isn\'t exists.')
+        sys.exit(os.EX_USAGE)
+
     updated_res = []
     res = []
     for s in sections:
@@ -104,10 +119,6 @@ def get_cfg_path(cfg_dir, profile_path=None, cfg_rel_path=None, cfg_name=None):
     else:
         cfg_path = os.path.join(cfg_dir, cfg_rel_path)
 
-    if not os.path.exists(cfg_path):
-        sys.stderr.write(f'cfg_path: {cfg_path} isn\'t exists.')
-        sys.exit(os.EX_USAGE)
-
     return cfg_path, cfg_url
 
 def get_net_res(cfg_path, sections):
@@ -144,9 +155,11 @@ def update_net_res(session, net_res, section, cfg_dir):
         try:
             #response = session.get(i[0])
             with session.get(i[0]) as response:
-                if section == 'proxy-providers':
-                    yaml_data = rmyaml.safe_load(response.content.decode('utf-8'))
-                    yaml_data['proxies']
+                if section == 'proxy-providers' and not does_have_section(response.content.decode('utf-8'), 'proxies'):
+                    #yaml_data = rmyaml.safe_load(response.content.decode('utf-8'))
+                    #yaml_data['proxies']
+                    print(f'Updated failed: didn\'t write the content to "{i[1]}", for "{i[0]}" hasn\'t "proxies" key')
+                    return updated_res
 
                 with open(i[1], 'wb') as f:
                     f.write(response.content)
@@ -155,14 +168,19 @@ def update_net_res(session, net_res, section, cfg_dir):
         except requests.exceptions.RequestException as e:
             print('requests exceptions：', e)
             return updated_res
-        except KeyError:
-            print(f'Updated failed: didn\'t write the content to "{i[1]}", for "{i[0]}" hasn\'t "proxies" key')
-            return updated_res
 
     # 恢复环境
     os.chdir(oldcwd)
 
     return updated_res;
+
+def does_have_section(data, section):
+    try:
+        yaml_data = rmyaml.safe_load(data)
+        yaml_data[section]
+    except KeyError:
+        return False
+    return True
 
 # net_res_files 的路径 src_cfg_dir 是相对路径
 def install_proxy_providers(net_res_files, src_cfg_dir, dest_cfg_dir):
@@ -179,7 +197,7 @@ def usage():
 def main():
     # ## parse args
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'd:c:f:n:p:i::t:rh', ['', '', '', '', '', 'help'])
+        opts, args = getopt.getopt(sys.argv[1:], 'd:c:f:n:p:i::t:u:rh', ['', '', '', '', '', 'help'])
     except getopt.GetoptError:
         usage()
         sys.exit(os.EX_USAGE)
@@ -192,6 +210,7 @@ def main():
     does_update_rules = False
     tun_dir = ''
     timeout = None
+    cfg_url = ''
 
     for opt, arg in opts:
         if opt in ('-h', '--help'):
@@ -209,6 +228,8 @@ def main():
             proxy = arg
         elif opt in ('-i'):
             timeout = arg
+        elif opt in ('-u'):
+            cfg_url = arg
         elif opt in ('-r'):
             does_update_rules = True
         elif opt in ('-t'):
@@ -221,7 +242,7 @@ def main():
     sections = ['proxy-providers']
     if does_update_rules:
         sections.append('rule-providers')
-    net_res = update_res(sections, cfg_dir, cfg_rel_path=cfg_rel_path, profile_path=profile_path, cfg_name=cfg_name, proxy=proxy, timeout=timeout)
+    net_res = update_res(sections, cfg_dir, cfg_rel_path=cfg_rel_path, profile_path=profile_path, cfg_name=cfg_name, cfg_url=cfg_url, proxy=proxy, timeout=timeout)
     if len(net_res) == 0:
         return -1
 
