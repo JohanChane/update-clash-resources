@@ -33,48 +33,42 @@ cd update-clash-resources/update_clashcfg_res
 python ./update_clashcfg_res.py -h
 ```
 
-### 常用用法
+## Examples
+
+更新 Windows 平台的 Clash for Windows 的配置:
+
+```PowerShell
+# 更新 list 所选的配置的资源。当加载出错时，list 的 index 会是 -1，所以要在没有出错前，运行该程序。
+update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -f 'C:/Users/johan/.config/clash/profiles' -p 'https://127.0.0.1:7890' --is_cfw -n 'config.yaml' -r
+```
+
+更新 Linux 平台的 Clash 的配置:
 
 ```sh
-## In Windows
-# 更新当前使用的配置的资源
-python ./update_clashcfg_res.py -d 'C:/Users/<user>/.config/clash' -p 'https://127.0.0.1:7890'
-# 更新名为 `config.yaml` 配置的资源
-python ./update_clashcfg_res.py -d 'C:/Users/<user>/.config/clash' -n 'config.yaml' -p 'https://127.0.0.1:7890'
+update_clashcfg_res.py -d ~/.config/clash -f ~/.config/clash -p 'https://127.0.0.1:7890' -n 'config.yaml' -r
+update_clashcfg_res.py -d ~/.config/clash -f ~/.config/clash -p 'https://127.0.0.1:7890' -n 'config.yaml' -u '<url>' -r
+update_clashcfg_res.py -d ~/.config/clash -f ~/.config/clash -p 'https://127.0.0.1:7890' -n 'config.yaml' -u '$(cat ~/.config/clash_tun/config_url)' -r
+```
 
-## In Linux
-# 更新 `<cfg_dir>/config.yaml` 配置的资源
-./update_clashcfg_res.py -d '/home/<user>/.config/clash' -c 'config.yaml' -p 'https://127.0.0.1:7890'
+更新 Linux 平台的 Clash Tun 的配置:
+
+```sh
+# 将更新的文件安装到 tun_dir
+update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -n 'myconfig' -p 'https://127.0.0.1:7890' -t '/srv/clash' -r
 ```
 
 ## `update_clashcfg_res` 的进阶用法
 
-### up_clashcfg_res.py
+### my_up_clashcfg_res.py
 
 该脚本的作用: 使用 `update_clashcfg_res` 时需要输入太多的参数, 而通常每次参数都是一样的, 所以可以在该脚本可以设置一些自己常用的参数。
 是会使用 `cfg_dir` 的默认位置更新资源。
 
-```sh
-# Clash for Windows in Windows. cfg_dir 的参数是 `-d C:/Users/<user>/.config/clash`
-python ./up_clashcfg_res.py -n "config.yaml" -p "https://127.0.0.1:7890"
-# Clash in Linux. cfg_dir 的参数是 `-d ~/.config/clash`
-python ./up_clashcfg_res.py -c "config.yaml" -p "https://127.0.0.1:7890"
-```
-
-如果想添加更多的默认值, 可以这样改:
-
-```sh
-cmd = f'python {script_path}/update_clashcfg_res/update_clashcfg_res.py -d "{cfg_dir}" <在此处添加更多的默认值> {" ".join(sys.argv[1:])}'
-
-# for example
-cmd = f'python {script_path}/update_clashcfg_res/update_clashcfg_res.py -d "{cfg_dir}" -n "config.yaml" -p "https://127.0.0.1:7890" {" ".join(sys.argv[1:])}'
-```
-
-比如我在 Windows 上使用 `Clash for Windows`, 在 Linux 上使用 `clash tun`。所以这个脚本我会改成这样 [my_up_clashcfg_res.py](./my_up_clashcfg_res.py)。
+比如: [my_up_clashcfg_res.py](./my_up_clashcfg_res.py)
 
 ```sh
 # In Linux
-./my_up_clashcfg_res.py -c config.yaml -r
+./my_up_clashcfg_res.py -n config.yaml -r
 
 # In Windows
 python ./my_up_clashcfg_res.py -n config.yaml -r
