@@ -13,6 +13,8 @@
 
 太多以上的之类的问题了。
 
+*我写的一个 [clash-auto](https://github.com/JohanChane/clash-auto) 可以通过自身代理来更新 Clash 配置依赖的资源。*
+
 ## update_clashcfg_res
 
 ### Requires
