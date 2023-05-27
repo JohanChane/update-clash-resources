@@ -10,8 +10,9 @@ def main():
     system = sys.platform
     home_dir = ""
     if system == "win32":
-        home_dir = os.environ["USERPROFILE"]
-        cfg_dir = os.path.join(home_dir, ".config/clash")
+        #home_dir = os.environ["USERPROFILE"]
+        #cfg_dir = os.path.join(home_dir, ".config/clash")
+        cfg_dir = r"D:\PortableProgramFiles\Clash.for.Windows\data"
         profile_dir = os.path.join(cfg_dir,  "profiles")
         cmd = f'python {PATH_OF_UPDATE_CLASHCFG_RES} -d "{cfg_dir}" -f "{profile_dir}" --is_cfw -p "https://127.0.0.1:7890" -i 5 {" ".join(sys.argv[1:])}'
         os.system(cmd)
