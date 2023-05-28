@@ -41,22 +41,28 @@ python ./update_clashcfg_res.py -h
 
 ```PowerShell
 # 更新 list 所选的配置的资源。当加载出错时，list 的 index 会是 -1，所以要在没有出错前，运行该程序。
-update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -f 'C:/Users/johan/.config/clash/profiles' -p 'https://127.0.0.1:7890' --is_cfw -n 'config.yaml' -r
+update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -p 'C:/Users/johan/.config/clash/profiles' -P 'https://127.0.0.1:7890' --is-cfw -n 'config.yaml' -r
 ```
 
 更新 Linux 平台的 Clash 的配置:
 
 ```sh
-update_clashcfg_res.py -d ~/.config/clash -f ~/.config/clash -p 'https://127.0.0.1:7890' -n 'config.yaml' -r
-update_clashcfg_res.py -d ~/.config/clash -f ~/.config/clash -p 'https://127.0.0.1:7890' -n 'config.yaml' -u '<url>' -r
-update_clashcfg_res.py -d ~/.config/clash -f ~/.config/clash -p 'https://127.0.0.1:7890' -n 'config.yaml' -u '$(cat ~/.config/clash_tun/config_url)' -r
+update_clashcfg_res.py -d ~/.config/clash -p ~/.config/clash -P 'https://127.0.0.1:7890' -n 'config.yaml' -r
+update_clashcfg_res.py -d ~/.config/clash -p ~/.config/clash -P 'https://127.0.0.1:7890' -n 'config.yaml' -u '<url>' -r
+update_clashcfg_res.py -d ~/.config/clash -p ~/.config/clash -P 'https://127.0.0.1:7890' -n 'config.yaml' -u '$(cat ~/.config/clash_tun/config_url)' -r
 ```
 
 更新 Linux 平台的 Clash Tun 的配置:
 
 ```sh
 # 将更新的文件安装到 tun_dir
-update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -n 'myconfig' -p 'https://127.0.0.1:7890' -t '/srv/clash' -r
+update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -n 'myconfig' -P 'https://127.0.0.1:7890' -T '/srv/clash' -r
+```
+
+使用 SubConverter Host (订阅转换的后端地址): 如果发现 url 的内容不是 Clash 的配置, 则使用订阅转换。
+
+```sh
+update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -n 'myconfig' -P 'https://127.0.0.1:7890' -H 'sub.xeton.dev' -r
 ```
 
 ## `update_clashcfg_res` 的进阶用法
@@ -74,6 +80,13 @@ update_clashcfg_res.py -d 'C:/Users/johan/.config/clash' -n 'myconfig' -p 'https
 
 # In Windows
 python ./my_up_clashcfg_res.py -n config.yaml -r
+```
+
+如果参数有空格:
+
+```PowerShell
+# In PowerShell
+python ./my_up_clashcfg_res.py -n '\"my config\"' -r
 ```
 
 ## IccRes
